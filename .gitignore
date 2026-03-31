@@ -1,0 +1,51 @@
+# ============================================================
+# ForgeQuant .gitignore
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Environment ---
+.env
+.venv/
+venv/
+env/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Data (large files) ---
+data/raw/*.csv
+data/raw/*.parquet
+data/processed/*.parquet
+data/databank/*.json
+
+# --- Knowledge Base (embeddings) ---
+knowledge_base/chroma/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Testing ---
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Misc ---
+*.bak
+*.tmp

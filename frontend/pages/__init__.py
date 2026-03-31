@@ -1,0 +1,1 @@
+"""ForgeQuant Frontend Pages."""

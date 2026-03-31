@@ -1,0 +1,71 @@
+# ForgeQuant Safety Rules
+# All strategies MUST comply with these rules.
+# Violation of any 'critical' rule blocks compilation.
+# Violation of any 'high' rule triggers a warning.
+
+required_elements:
+  stop_loss:
+    description: "Every strategy must include a stop loss mechanism"
+    blocks_accepted:
+      - FixedTPSL
+      - TrailingStop
+      - BreakevenStop
+      - ATRBasedSizing
+    severity: critical
+
+  profit_taking:
+    description: "Must have a profit-taking mechanism"
+    blocks_accepted:
+      - FixedTPSL
+      - TrailingStop
+    severity: critical
+
+  money_management:
+    description: "Must include explicit position sizing"
+    blocks_accepted:
+      - FixedRisk
+      - VolatilityTargeting
+      - KellyFractional
+      - ATRBasedSizing
+    severity: critical
+
+  max_risk_per_trade:
+    value: 0.03
+    description: "No single trade may risk more than 3 percent of equity"
+    severity: critical
+
+  minimum_trades_in_backtest:
+    value: 150
+    description: "Strategy must generate at least 150 trades for statistical significance"
+    severity: high
+
+forbidden_patterns:
+  martingale:
+    description: "Doubling down on losses is strictly forbidden"
+    severity: critical
+
+  grid_without_limits:
+    description: "Grid trading without maximum position limits is forbidden"
+    severity: critical
+
+  no_stop_loss:
+    description: "Trading without any stop loss mechanism is forbidden"
+    severity: critical
+
+  excessive_leverage:
+    description: "Risk per trade exceeding 5 percent is forbidden"
+    severity: critical
+
+  unlimited_positions:
+    description: "Must have a maximum number of concurrent positions"
+    severity: high
+
+quality_thresholds:
+  min_sharpe_ratio: 0.85
+  max_drawdown_pct: 0.18
+  min_profit_factor: 1.35
+  min_win_rate: 0.35
+  max_oos_degradation: 0.32
+  min_robustness_score: 0.65
+  min_parameter_stability: 0.70
+  min_monte_carlo_survival: 0.65

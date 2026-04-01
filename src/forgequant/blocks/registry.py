@@ -15,7 +15,7 @@ keyed by their metadata.name. It provides:
 
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Any, Iterator
 
 from forgequant.blocks.base import BaseBlock
 from forgequant.core.exceptions import BlockNotFoundError, BlockRegistrationError
@@ -38,7 +38,7 @@ class _BlockRegistryMeta(type):
     def __call__(cls, *args: object, **kwargs: object) -> BlockRegistry:
         if cls._instance is None:
             cls._instance = super().__call__(*args, **kwargs)
-        return cls._instance
+        return cls._instance  # type: ignore[return-value]
 
 
 class BlockRegistry(metaclass=_BlockRegistryMeta):
@@ -289,3 +289,33 @@ class BlockRegistry(metaclass=_BlockRegistryMeta):
 
     def __repr__(self) -> str:
         return f"<BlockRegistry blocks={self.count()}>"
+
+    def to_catalog_dict(self) -> dict[str, dict[str, Any]]:
+        """
+        Export the entire registry as a JSON-serialisable dict.
+
+        Returns:
+            { "ema": { "category": "indicator", "description": "...", ... }, ... }
+        """
+        catalog: dict[str, dict[str, Any]] = {}
+        for name, block_cls in sorted(self._blocks.items()):
+            meta = block_cls.metadata
+            catalog[name] = {
+                "category": meta.category.value if hasattr(meta.category, "value") else str(meta.category),
+                "display_name": meta.display_name,
+                "description": meta.description,
+                "parameters": [
+                    {
+                        "name": p.name,
+                        "param_type": p.param_type,
+                        "default": p.default,
+                        "min_value": p.min_value,
+                        "max_value": p.max_value,
+                        "choices": list(p.choices) if p.choices else [],
+                    }
+                    for p in meta.parameters
+                ],
+                "tags": list(meta.tags),
+                "version": meta.version,
+            }
+        return catalog

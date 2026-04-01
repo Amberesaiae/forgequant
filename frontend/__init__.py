@@ -1,1 +1,0 @@
-"""ForgeQuant Frontend UI."""

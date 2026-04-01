@@ -1,1 +1,1 @@
-"""Integration tests for ForgeQuant pipelines."""
+"""Integration tests."""

@@ -1,1 +1,1 @@
-"""ForgeQuant Test Suite."""
+"""ForgeQuant test suite."""

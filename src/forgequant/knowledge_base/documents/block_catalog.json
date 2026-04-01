@@ -1,0 +1,23 @@
+[
+    {
+        "id": "catalog_ema_crossover",
+        "title": "EMA Crossover Strategy Pattern",
+        "content": "A classic trend-following entry: use two EMAs (fast: 10-20 periods, slow: 50-200 periods). Enter long when the fast EMA crosses above the slow EMA, and short on the reverse cross. Best combined with: (1) A trend filter using an even longer EMA (200 period) to only trade in the prevailing trend direction. (2) An ATR-based trailing stop for exits. (3) Fixed risk money management at 1% per trade. The crossover_entry block implements this pattern with state-change detection so the signal fires only on the exact crossover bar.",
+        "category": "pattern",
+        "tags": ["ema", "crossover", "trend_following", "entry"]
+    },
+    {
+        "id": "catalog_rsi_mean_reversion",
+        "title": "RSI Mean Reversion Strategy Pattern",
+        "content": "Enter trades when RSI recovers from extreme levels. Setup: (1) Use RSI with period 14. (2) The threshold_cross_entry block in mean_reversion mode signals long when RSI crosses back above 30 (recovery from oversold) and short when RSI crosses below 70. (3) Add a trend filter — only take long signals when above the 200 EMA, short signals below. (4) Use fixed TP/SL at 1.5x ATR stop and 2x ATR take profit. (5) Bollinger Bands provide additional confirmation — enter only when price is also near the lower band for longs.",
+        "category": "pattern",
+        "tags": ["rsi", "mean_reversion", "threshold", "oversold", "overbought"]
+    },
+    {
+        "id": "catalog_breakout_system",
+        "title": "Breakout Strategy Pattern",
+        "content": "Trade breakouts from consolidation ranges. Setup: (1) Use the breakout block with a 20-bar lookback. (2) Confirm with volume (volume_multiplier=1.5). (3) Add ADX filter — only take breakouts when ADX > 25 indicating trend is developing. (4) Use a trailing stop (2.5x ATR) to capture extended moves. (5) Money management: fixed risk 1% with ATR-based sizing. Common improvement: add a session filter to trade only during high-liquidity hours.",
+        "category": "pattern",
+        "tags": ["breakout", "volume", "adx", "trend", "consolidation"]
+    }
+]

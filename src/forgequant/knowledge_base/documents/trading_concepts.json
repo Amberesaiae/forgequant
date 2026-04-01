@@ -1,0 +1,37 @@
+[
+    {
+        "id": "concept_trend_following",
+        "title": "Trend Following Principles",
+        "content": "Trend following strategies profit by riding sustained price movements. Key principles: (1) Let winners run and cut losers short. (2) Use a trend filter like a 200-period EMA to determine the prevailing direction. (3) Enter on pullbacks or breakouts in the trend direction. (4) Use ATR-based stops that give the trade room to breathe. (5) Size positions inversely to volatility. Common pitfalls: overtrading in choppy markets, stops too tight for the timeframe, and ignoring the trend filter.",
+        "category": "strategy",
+        "tags": ["trend", "moving_average", "ema", "breakout", "pullback"]
+    },
+    {
+        "id": "concept_mean_reversion",
+        "title": "Mean Reversion Principles",
+        "content": "Mean reversion strategies profit from price returning to a central tendency after deviation. Key principles: (1) Identify overbought/oversold conditions using RSI, Stochastic, or Bollinger Bands. (2) Enter when momentum is exhausted and reversal patterns appear. (3) Use tight stops since the premise is wrong if price continues in the extreme direction. (4) Take profit quickly as the reversion move completes. (5) Only trade mean reversion in ranging markets — add a trend filter and avoid strongly trending periods. Risk-reward ratios are typically lower (1:1 to 1.5:1) but win rates are higher (55-65%).",
+        "category": "strategy",
+        "tags": ["mean_reversion", "rsi", "bollinger", "stochastic", "oversold", "overbought"]
+    },
+    {
+        "id": "concept_risk_management",
+        "title": "Position Sizing and Risk Management",
+        "content": "Risk management determines long-term survival. Key rules: (1) Never risk more than 1-2% of equity per trade. (2) Size positions using ATR so risk per trade is consistent in dollar terms regardless of volatility. (3) Use the Fixed Risk formula: position_size = (equity * risk_pct) / (ATR * sl_multiplier). (4) The Kelly Criterion gives the theoretically optimal bet size but should be used at 25% (quarter Kelly) to reduce drawdowns. (5) Always have a stop-loss — mental stops are not stops. (6) Consider a max drawdown circuit breaker that halts trading at 15-20% drawdown.",
+        "category": "risk",
+        "tags": ["risk", "position_sizing", "kelly", "atr", "drawdown", "stop_loss"]
+    },
+    {
+        "id": "concept_atr_stops",
+        "title": "ATR-Based Stop Loss Placement",
+        "content": "ATR (Average True Range) provides a volatility-adaptive stop distance. Guidelines: (1) For trend following, use 2-3x ATR for stops and 3-5x ATR for take profit. (2) For mean reversion, use 1-1.5x ATR for stops and 1-2x ATR for take profit. (3) A trailing stop at 2.5x ATR works well for trending markets. (4) The breakeven stop should activate after 1.5x ATR of profit. (5) Always use the same ATR period (typically 14) across exit rules and money management for consistency.",
+        "category": "risk",
+        "tags": ["atr", "stop_loss", "trailing_stop", "take_profit", "breakeven"]
+    },
+    {
+        "id": "concept_session_filtering",
+        "title": "Trading Session Management",
+        "content": "Market behavior varies significantly across trading sessions. Guidelines: (1) The London-New York overlap (13:00-17:00 UTC) has the highest forex liquidity. (2) Avoid trading around major news events. (3) Asian session (00:00-08:00 UTC) tends to be ranging — good for mean reversion. (4) Friday afternoon liquidity drops — close positions before weekends. (5) Spreads widen during off-hours — use a spread filter. (6) Many strategies benefit from a session filter that restricts entry to the London and New York sessions.",
+        "category": "market_structure",
+        "tags": ["session", "london", "new_york", "asian", "liquidity", "spread"]
+    }
+]

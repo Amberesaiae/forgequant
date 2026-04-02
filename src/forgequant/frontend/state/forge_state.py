@@ -8,6 +8,13 @@ from typing import Any
 
 import reflex as rx
 
+from forgequant.ai_forge.providers import (
+    MODEL_CATALOG,
+    PROVIDER_DISPLAY_NAMES,
+    PROVIDER_MODEL_IDS,
+    PROVIDER_ORDER,
+)
+
 
 class ForgeState(rx.State):
     """
@@ -39,62 +46,21 @@ class ForgeState(rx.State):
     # ── Error ───────────────────────────────────────────────────────────
     error_message: str = ""
 
-    # ── Static data (provider/model options from catalog) ───────────────
-    provider_options: list[str] = ["glm", "openai", "anthropic", "groq"]
+    # ── Static data (derived from ai_forge/providers.py catalog) ─────────
+    provider_options: list[str] = list(PROVIDER_ORDER)
 
-    provider_display_names: dict[str, str] = {
-        "glm": "GLM (Z.ai)",
-        "openai": "OpenAI",
-        "anthropic": "Anthropic",
-        "groq": "Groq",
-    }
+    provider_display_names: dict[str, str] = dict(PROVIDER_DISPLAY_NAMES)
 
-    # LiteLLM model IDs grouped by provider
-    model_options: dict[str, list[str]] = {
-        "glm": [
-            "zai/glm-5-turbo",
-            "zai/glm-5.1",
-            "zai/glm-5",
-            "zai/glm-4.7",
-            "zai/glm-4.7-flash",
-            "zai/glm-4.6",
-            "zai/glm-4.5",
-            "zai/glm-4.5-flash",
-            "zai/glm-4.5-air",
-        ],
-        "openai": [
-            "openai/gpt-4o",
-            "openai/gpt-4o-mini",
-            "openai/gpt-4-turbo",
-        ],
-        "anthropic": [
-            "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-3-5-haiku-20241022",
-        ],
-        "groq": [
-            "groq/llama-3.1-70b-versatile",
-            "groq/mixtral-8x7b-32768",
-        ],
-    }
+    model_options: dict[str, list[str]] = {k: list(v) for k, v in PROVIDER_MODEL_IDS.items()}
 
-    # Human-readable descriptions for model selector
     model_descriptions: dict[str, str] = {
-        "zai/glm-5-turbo": "Turbo · 48 tok/s · 203K ctx · $0.96/M in — Best for iteration speed",
-        "zai/glm-5.1": "Flagship (post-training) · 200K ctx · 94.6% of Claude Opus coding",
-        "zai/glm-5": "Flagship (open-source, MIT) · 205K ctx · Complex systems engineering",
-        "zai/glm-4.7": "Production workhorse · 200K ctx · Rivals Claude Sonnet 4",
-        "zai/glm-4.7-flash": "Free tier · Lightweight · Zero cost",
-        "zai/glm-4.6": "Previous flagship · 200K ctx · Strong coding",
-        "zai/glm-4.5": "Previous gen · 128K ctx · 355B MoE",
-        "zai/glm-4.5-flash": "Free tier · Previous gen · Zero cost",
-        "zai/glm-4.5-air": "Lightweight · Agent-centric · Compact MoE",
-        "openai/gpt-4o": "OpenAI flagship · 128K ctx · Multimodal",
-        "openai/gpt-4o-mini": "OpenAI compact · 128K ctx · Cost-effective",
-        "openai/gpt-4-turbo": "OpenAI previous gen · 128K ctx",
-        "anthropic/claude-sonnet-4-20250514": "Anthropic balanced · 200K ctx",
-        "anthropic/claude-3-5-haiku-20241022": "Anthropic fast · 200K ctx",
-        "groq/llama-3.1-70b-versatile": "Llama 3.1 70B on Groq · Ultra-fast",
-        "groq/mixtral-8x7b-32768": "Mixtral MoE on Groq · Budget",
+        mid: (
+            f"{info.get('tier', '').title()} | "
+            f"{info.get('context_window', 0) // 1000}K ctx | "
+            f"{info.get('pricing', '')} — "
+            f"{info.get('description', '')[:60]}"
+        )
+        for mid, info in MODEL_CATALOG.items()
     }
 
     @rx.var
@@ -245,9 +211,8 @@ class ForgeState(rx.State):
     @rx.event
     def save_current_spec(self) -> None:
         if self.spec_dict:
-            parent = self.get_parent_state()
-            if parent is not None:
-                parent.save_strategy(self.spec_dict)
+            from forgequant.frontend.state.app_state import AppState
+            yield AppState.save_strategy(self.spec_dict)
 
     @rx.event
     def clear_results(self) -> None:

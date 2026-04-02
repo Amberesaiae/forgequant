@@ -22,3 +22,11 @@ __all__ = [
     "BlockCategory",
     "ParameterSpec",
 ]
+
+# Eager registration: import sub-packages to trigger @BlockRegistry.register decorators
+import forgequant.blocks.indicators        # noqa: F401, E402
+import forgequant.blocks.price_action      # noqa: F401, E402
+import forgequant.blocks.entry_rules       # noqa: F401, E402
+import forgequant.blocks.exit_rules        # noqa: F401, E402
+import forgequant.blocks.filters           # noqa: F401, E402
+import forgequant.blocks.money_management  # noqa: F401, E402

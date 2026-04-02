@@ -22,16 +22,7 @@ class AppState(rx.State):
         if self.is_initialised:
             return
         try:
-            import importlib
-            for mod in [
-                "forgequant.blocks.indicators",
-                "forgequant.blocks.price_action",
-                "forgequant.blocks.entry_rules",
-                "forgequant.blocks.exit_rules",
-                "forgequant.blocks.filters",
-                "forgequant.blocks.money_management",
-            ]:
-                importlib.import_module(mod)
+            import forgequant.blocks  # noqa: F401 — eager registration
 
             from forgequant.blocks.registry import BlockRegistry
             self.block_catalog = BlockRegistry().to_catalog_dict()
@@ -55,6 +46,10 @@ class AppState(rx.State):
             cats.add(block_info.get("category", "unknown"))
         return sorted(cats)
 
+    @rx.var
+    def block_categories_count(self) -> int:
+        return len(self.block_categories)
+
     @rx.event
     def save_strategy(self, spec_dict: dict[str, Any]) -> None:
         self.strategies = [
@@ -65,3 +60,23 @@ class AppState(rx.State):
     @rx.event
     def delete_strategy(self, name: str) -> None:
         self.strategies = [s for s in self.strategies if s.get("name") != name]
+
+    @rx.var
+    def strategy_display_list(self) -> list[dict[str, Any]]:
+        result = []
+        for s in self.strategies:
+            symbols = s.get("symbols", [])
+            block_count = (
+                len(s.get("indicators", []))
+                + len(s.get("entry_rules", []))
+                + len(s.get("exit_rules", []))
+                + len(s.get("filters", []))
+                + len(s.get("money_management", []))
+                + len(s.get("price_action", []))
+            )
+            result.append({
+                **s,
+                "_symbols_str": ", ".join(symbols) if symbols else "—",
+                "_block_count": block_count,
+            })
+        return result

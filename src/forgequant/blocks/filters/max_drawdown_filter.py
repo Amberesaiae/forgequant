@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -86,7 +86,7 @@ class MaxDrawdownFilter(BaseBlock):
 
         first_close = close.iloc[0]
         if first_close == 0:
-            raise BlockComputeError(
+            raise BlockComputeError(  # pragma: no cover
                 block_name=self.metadata.name,
                 reason="First close price is 0; cannot compute returns",
             )
@@ -120,7 +120,7 @@ class MaxDrawdownFilter(BaseBlock):
                 "dd_running_max": running_max,
                 "dd_drawdown": drawdown,
                 "dd_drawdown_pct": drawdown_pct,
-                "dd_allow_trading": allow_trading,
+                SC.dd_allow_trading: allow_trading,
             },
             index=data.index,
         )

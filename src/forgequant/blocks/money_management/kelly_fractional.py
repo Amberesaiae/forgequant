@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -146,7 +146,7 @@ class KellyFractionalSizing(BaseBlock):
                 "kelly_payoff_ratio": payoff_ratio,
                 "kelly_full_fraction": full_kelly,
                 "kelly_fraction_used": frac_kelly,
-                "kelly_position_size": position_size,
+                SC.kelly_position_size: position_size,
             },
             index=data.index,
         )

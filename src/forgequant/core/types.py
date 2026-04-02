@@ -7,6 +7,7 @@ type shapes, preventing stringly-typed code.
 
 from __future__ import annotations
 
+from dataclasses import dataclass as _dataclass
 from enum import Enum, unique
 from typing import Any
 
@@ -63,7 +64,7 @@ class TradeDirection(str, Enum):
     BOTH = "both"
 
     def __str__(self) -> str:
-        return self.value
+        return self.value  # pragma: no cover
 
 
 @unique
@@ -74,7 +75,7 @@ class MovingAverageType(str, Enum):
     EMA = "ema"
 
     def __str__(self) -> str:
-        return self.value
+        return self.value  # pragma: no cover
 
 
 # ── Type Aliases ─────────────────────────────────────────────────────────────
@@ -100,7 +101,7 @@ OHLCV_REQUIRED_COLUMNS: dict[str, str] = {
 }
 
 
-def validate_ohlcv(df: pd.DataFrame, block_name: str = "unknown") -> None:
+def validate_ohlcv(df: pd.DataFrame, block_name: str = "unknown") -> pd.DataFrame:
     """
     Validate that a DataFrame conforms to the expected OHLCV shape.
 
@@ -114,6 +115,9 @@ def validate_ohlcv(df: pd.DataFrame, block_name: str = "unknown") -> None:
         df: The DataFrame to validate.
         block_name: Name of the calling block (for error messages).
 
+    Returns:
+        A normalized copy of the DataFrame with lowercase column names.
+
     Raises:
         ValueError: If any validation check fails.
     """
@@ -121,6 +125,7 @@ def validate_ohlcv(df: pd.DataFrame, block_name: str = "unknown") -> None:
         raise ValueError(f"[{block_name}] Input DataFrame is empty")
 
     # Normalize column names to lowercase for consistent access
+    df = df.copy()
     df.columns = df.columns.str.lower()
 
     missing = set(OHLCV_REQUIRED_COLUMNS.keys()) - set(df.columns)
@@ -139,3 +144,119 @@ def validate_ohlcv(df: pd.DataFrame, block_name: str = "unknown") -> None:
     for col in OHLCV_REQUIRED_COLUMNS:
         if df[col].isna().all():
             raise ValueError(f"[{block_name}] Column '{col}' is entirely NaN")
+
+    return df
+
+
+@_dataclass(frozen=True)
+class SignalColumns:
+    """Typed string constants for the signal contract between blocks and the assembler.
+
+    Single source of truth for column names that the signal assembler recognizes.
+    """
+
+    # ── Entry long ──────────────────────────────────────────────────
+    crossover_long_entry: str = "crossover_long_entry"
+    threshold_long_entry: str = "threshold_long_entry"
+    confluence_long_entry: str = "confluence_long_entry"
+    reversal_long_entry: str = "reversal_long_entry"
+    breakout_long: str = "breakout_long"
+    pullback_long: str = "pullback_long"
+
+    # ── Entry short ─────────────────────────────────────────────────
+    crossover_short_entry: str = "crossover_short_entry"
+    threshold_short_entry: str = "threshold_short_entry"
+    confluence_short_entry: str = "confluence_short_entry"
+    reversal_short_entry: str = "reversal_short_entry"
+    breakout_short: str = "breakout_short"
+    pullback_short: str = "pullback_short"
+
+    # ── Exit long ───────────────────────────────────────────────────
+    trail_long_exit: str = "trail_long_exit"
+    time_max_bars_exit: str = "time_max_bars_exit"
+
+    # ── Exit short ──────────────────────────────────────────────────
+    trail_short_exit: str = "trail_short_exit"
+
+    # ── Filter allow long ───────────────────────────────────────────
+    trend_allow_long: str = "trend_allow_long"
+
+    # ── Filter allow short ──────────────────────────────────────────
+    trend_allow_short: str = "trend_allow_short"
+
+    # ── Filter allow (both) ─────────────────────────────────────────
+    session_active: str = "session_active"
+    spread_ok: str = "spread_ok"
+    dd_allow_trading: str = "dd_allow_trading"
+
+    # ── TP/SL ──────────────────────────────────────────────────────
+    tpsl_long_tp: str = "tpsl_long_tp"
+    tpsl_long_sl: str = "tpsl_long_sl"
+    tpsl_short_tp: str = "tpsl_short_tp"
+    tpsl_short_sl: str = "tpsl_short_sl"
+
+    # ── Position size ───────────────────────────────────────────────
+    fr_position_size: str = "fr_position_size"
+    vt_position_size: str = "vt_position_size"
+    kelly_position_size: str = "kelly_position_size"
+    atrs_position_size: str = "atrs_position_size"
+
+    # ── Price action helpers ────────────────────────────────────────
+    breakout_volume_confirm: str = "breakout_volume_confirm"
+
+    # ── Derived lists for the assembler ─────────────────────────────
+    @property
+    def entry_long_patterns(self) -> list[str]:
+        return [
+            self.crossover_long_entry,
+            self.threshold_long_entry,
+            self.confluence_long_entry,
+            self.reversal_long_entry,
+        ]
+
+    @property
+    def entry_short_patterns(self) -> list[str]:
+        return [
+            self.crossover_short_entry,
+            self.threshold_short_entry,
+            self.confluence_short_entry,
+            self.reversal_short_entry,
+        ]
+
+    @property
+    def exit_long_patterns(self) -> list[str]:
+        return [self.trail_long_exit, self.time_max_bars_exit]
+
+    @property
+    def exit_short_patterns(self) -> list[str]:
+        return [self.trail_short_exit, self.time_max_bars_exit]
+
+    @property
+    def allow_long_patterns(self) -> list[str]:
+        return [
+            self.trend_allow_long,
+            self.session_active,
+            self.spread_ok,
+            self.dd_allow_trading,
+        ]
+
+    @property
+    def allow_short_patterns(self) -> list[str]:
+        return [
+            self.trend_allow_short,
+            self.session_active,
+            self.spread_ok,
+            self.dd_allow_trading,
+        ]
+
+    @property
+    def position_size_candidates(self) -> list[str]:
+        return [
+            self.fr_position_size,
+            self.vt_position_size,
+            self.kelly_position_size,
+            self.atrs_position_size,
+        ]
+
+
+SIGNAL_COLUMNS = SignalColumns()

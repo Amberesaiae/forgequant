@@ -15,7 +15,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -164,8 +164,8 @@ class ConfluenceEntry(BaseBlock):
                 "confluence_trend_ok": trend_bullish.fillna(False),
                 "confluence_momentum_ok": momentum_long.fillna(False),
                 "confluence_volatility_ok": volatility_ok.fillna(False),
-                "confluence_long_entry": long_entry.fillna(False),
-                "confluence_short_entry": short_entry.fillna(False),
+                SC.confluence_long_entry: long_entry.fillna(False),
+                SC.confluence_short_entry: short_entry.fillna(False),
                 "confluence_score": score.fillna(0).astype(int),
             },
             index=data.index,

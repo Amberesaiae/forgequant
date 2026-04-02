@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -113,8 +113,8 @@ class PullbackBlock(BaseBlock):
                 "pullback_ma": ma,
                 "pullback_upper_zone": upper_zone,
                 "pullback_lower_zone": lower_zone,
-                "pullback_long": pullback_long.fillna(False),
-                "pullback_short": pullback_short.fillna(False),
+                SC.pullback_long: pullback_long.fillna(False),
+                SC.pullback_short: pullback_short.fillna(False),
             },
             index=data.index,
         )

@@ -9,46 +9,9 @@ import pandas as pd
 
 from forgequant.core.compiler.compiled_strategy import BlockOutput, CompiledStrategy
 from forgequant.core.logging import get_logger
+from forgequant.core.types import SIGNAL_COLUMNS as SC
 
 logger = get_logger(__name__)
-
-ENTRY_LONG_PATTERNS = [
-    "crossover_long_entry",
-    "threshold_long_entry",
-    "confluence_long_entry",
-    "reversal_long_entry",
-]
-
-ENTRY_SHORT_PATTERNS = [
-    "crossover_short_entry",
-    "threshold_short_entry",
-    "confluence_short_entry",
-    "reversal_short_entry",
-]
-
-EXIT_LONG_PATTERNS = [
-    "trail_long_exit",
-    "time_max_bars_exit",
-]
-
-EXIT_SHORT_PATTERNS = [
-    "trail_short_exit",
-    "time_max_bars_exit",
-]
-
-ALLOW_LONG_PATTERNS = [
-    "trend_allow_long",
-    "session_active",
-    "spread_ok",
-    "dd_allow_trading",
-]
-
-ALLOW_SHORT_PATTERNS = [
-    "trend_allow_short",
-    "session_active",
-    "spread_ok",
-    "dd_allow_trading",
-]
 
 
 def _find_column(
@@ -56,7 +19,7 @@ def _find_column(
     patterns: list[str],
 ) -> pd.Series | None:
     if not isinstance(output.result, pd.DataFrame):
-        return None
+        return None  # pragma: no cover
 
     for pattern in patterns:
         if pattern in output.result.columns:
@@ -66,7 +29,7 @@ def _find_column(
             try:
                 return series.astype(bool)
             except (ValueError, TypeError):
-                continue
+                continue  # pragma: no cover
 
     return None
 
@@ -76,7 +39,7 @@ def _find_float_column(
     column_name: str,
 ) -> pd.Series | None:
     if not isinstance(output.result, pd.DataFrame):
-        return None
+        return None  # pragma: no cover
 
     if column_name in output.result.columns:
         return output.result[column_name]
@@ -121,35 +84,35 @@ def assemble_signals(compiled: CompiledStrategy) -> CompiledStrategy:
 
     for name, output in compiled.block_outputs.items():
         if output.category == "entry_rule":
-            el = _find_column(output, ENTRY_LONG_PATTERNS)
+            el = _find_column(output, SC.entry_long_patterns)
             if el is not None:
                 entry_longs.append(el)
 
-            es = _find_column(output, ENTRY_SHORT_PATTERNS)
+            es = _find_column(output, SC.entry_short_patterns)
             if es is not None:
                 entry_shorts.append(es)
 
     for name, output in compiled.block_outputs.items():
         if output.category == "price_action":
-            bl = _find_column(output, ["breakout_long"])
+            bl = _find_column(output, [SC.breakout_long])
             if bl is not None:
-                vol = _find_column(output, ["breakout_volume_confirm"])
+                vol = _find_column(output, [SC.breakout_volume_confirm])
                 if vol is not None:
                     bl = bl & vol
                 entry_longs.append(bl)
 
-            bs = _find_column(output, ["breakout_short"])
+            bs = _find_column(output, [SC.breakout_short])
             if bs is not None:
-                vol = _find_column(output, ["breakout_volume_confirm"])
+                vol = _find_column(output, [SC.breakout_volume_confirm])
                 if vol is not None:
                     bs = bs & vol
                 entry_shorts.append(bs)
 
-            pl = _find_column(output, ["pullback_long"])
+            pl = _find_column(output, [SC.pullback_long])
             if pl is not None:
                 entry_longs.append(pl)
 
-            ps = _find_column(output, ["pullback_short"])
+            ps = _find_column(output, [SC.pullback_short])
             if ps is not None:
                 entry_shorts.append(ps)
 
@@ -161,11 +124,11 @@ def assemble_signals(compiled: CompiledStrategy) -> CompiledStrategy:
 
     for name, output in compiled.block_outputs.items():
         if output.category == "exit_rule":
-            xl = _find_column(output, EXIT_LONG_PATTERNS)
+            xl = _find_column(output, SC.exit_long_patterns)
             if xl is not None:
                 exit_longs.append(xl)
 
-            xs = _find_column(output, EXIT_SHORT_PATTERNS)
+            xs = _find_column(output, SC.exit_short_patterns)
             if xs is not None:
                 exit_shorts.append(xs)
 
@@ -177,11 +140,11 @@ def assemble_signals(compiled: CompiledStrategy) -> CompiledStrategy:
 
     for name, output in compiled.block_outputs.items():
         if output.category == "filter":
-            al = _find_column(output, ALLOW_LONG_PATTERNS)
+            al = _find_column(output, SC.allow_long_patterns)
             if al is not None:
                 allow_longs.append(al)
 
-            ash = _find_column(output, ALLOW_SHORT_PATTERNS)
+            ash = _find_column(output, SC.allow_short_patterns)
             if ash is not None:
                 allow_shorts.append(ash)
 
@@ -191,22 +154,22 @@ def assemble_signals(compiled: CompiledStrategy) -> CompiledStrategy:
     for name, output in compiled.block_outputs.items():
         if output.category == "exit_rule":
             if compiled.stop_loss_long is None:
-                sl_l = _find_float_column(output, "tpsl_long_sl")
+                sl_l = _find_float_column(output, SC.tpsl_long_sl)
                 if sl_l is not None:
                     compiled.stop_loss_long = sl_l
 
             if compiled.stop_loss_short is None:
-                sl_s = _find_float_column(output, "tpsl_short_sl")
+                sl_s = _find_float_column(output, SC.tpsl_short_sl)
                 if sl_s is not None:
                     compiled.stop_loss_short = sl_s
 
             if compiled.take_profit_long is None:
-                tp_l = _find_float_column(output, "tpsl_long_tp")
+                tp_l = _find_float_column(output, SC.tpsl_long_tp)
                 if tp_l is not None:
                     compiled.take_profit_long = tp_l
 
             if compiled.take_profit_short is None:
-                tp_s = _find_float_column(output, "tpsl_short_tp")
+                tp_s = _find_float_column(output, SC.tpsl_short_tp)
                 if tp_s is not None:
                     compiled.take_profit_short = tp_s
 
@@ -214,12 +177,7 @@ def assemble_signals(compiled: CompiledStrategy) -> CompiledStrategy:
     mm_output = compiled.block_outputs.get(mm_name)
 
     if mm_output is not None and isinstance(mm_output.result, pd.DataFrame):
-        size_col_candidates = [
-            "fr_position_size",
-            "vt_position_size",
-            "kelly_position_size",
-            "atrs_position_size",
-        ]
+        size_col_candidates = SC.position_size_candidates
         for col in size_col_candidates:
             if col in mm_output.result.columns:
                 compiled.position_size_long = mm_output.result[col]

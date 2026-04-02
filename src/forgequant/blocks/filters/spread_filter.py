@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -96,7 +96,7 @@ class SpreadFilter(BaseBlock):
             {
                 "spread_value": spread,
                 "spread_avg": avg_spread,
-                "spread_ok": spread_ok.fillna(False),
+                SC.spread_ok: spread_ok.fillna(False),
             },
             index=data.index,
         )

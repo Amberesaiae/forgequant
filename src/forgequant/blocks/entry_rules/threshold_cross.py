@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -120,8 +120,8 @@ class ThresholdCrossEntry(BaseBlock):
         result = pd.DataFrame(
             {
                 "threshold_indicator": rsi,
-                "threshold_long_entry": long_entry.fillna(False),
-                "threshold_short_entry": short_entry.fillna(False),
+                SC.threshold_long_entry: long_entry.fillna(False),
+                SC.threshold_short_entry: short_entry.fillna(False),
             },
             index=data.index,
         )

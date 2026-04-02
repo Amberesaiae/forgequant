@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -104,8 +104,8 @@ class CrossoverEntry(BaseBlock):
             {
                 "crossover_fast_ma": fast_ma,
                 "crossover_slow_ma": slow_ma,
-                "crossover_long_entry": long_entry.fillna(False),
-                "crossover_short_entry": short_entry.fillna(False),
+                SC.crossover_long_entry: long_entry.fillna(False),
+                SC.crossover_short_entry: short_entry.fillna(False),
             },
             index=data.index,
         )

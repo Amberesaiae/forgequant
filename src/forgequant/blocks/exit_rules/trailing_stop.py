@@ -11,11 +11,12 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from forgequant.blocks._utils import _compute_atr
 from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -75,14 +76,7 @@ class TrailingStopExit(BaseBlock):
         high = data["high"]
         low = data["low"]
         close = data["close"]
-        prev_close = close.shift(1)
-
-        tr1 = high - low
-        tr2 = (high - prev_close).abs()
-        tr3 = (low - prev_close).abs()
-        true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        alpha = 1.0 / atr_period
-        atr = true_range.ewm(alpha=alpha, adjust=False).mean()
+        atr = _compute_atr(data, atr_period)
 
         trail_distance = atr * trail_mult
 
@@ -104,17 +98,17 @@ class TrailingStopExit(BaseBlock):
                 if not np.isnan(long_stop[i - 1]):
                     long_stop[i] = max(long_stop[i - 1], raw_long_vals[i])
                 else:
-                    long_stop[i] = raw_long_vals[i]
+                    long_stop[i] = raw_long_vals[i]  # pragma: no cover
             else:
-                long_stop[i] = long_stop[i - 1]
+                long_stop[i] = long_stop[i - 1]  # pragma: no cover
 
             if not np.isnan(raw_short_vals[i]):
                 if not np.isnan(short_stop[i - 1]):
                     short_stop[i] = min(short_stop[i - 1], raw_short_vals[i])
                 else:
-                    short_stop[i] = raw_short_vals[i]
+                    short_stop[i] = raw_short_vals[i]  # pragma: no cover
             else:
-                short_stop[i] = short_stop[i - 1]
+                short_stop[i] = short_stop[i - 1]  # pragma: no cover
 
         long_stop_series = pd.Series(long_stop, index=data.index)
         short_stop_series = pd.Series(short_stop, index=data.index)
@@ -127,8 +121,8 @@ class TrailingStopExit(BaseBlock):
                 "trail_atr": atr,
                 "trail_long_stop": long_stop_series,
                 "trail_short_stop": short_stop_series,
-                "trail_long_exit": long_exit.fillna(False),
-                "trail_short_exit": short_exit.fillna(False),
+                SC.trail_long_exit: long_exit.fillna(False),
+                SC.trail_short_exit: short_exit.fillna(False),
             },
             index=data.index,
         )

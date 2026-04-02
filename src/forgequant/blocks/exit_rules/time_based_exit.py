@@ -15,7 +15,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -125,7 +125,7 @@ class TimeBasedExit(BaseBlock):
         result = pd.DataFrame(
             {
                 "time_bar_index": bar_index,
-                "time_max_bars_exit": max_bars_exit,
+                SC.time_max_bars_exit: max_bars_exit,
                 "time_avoid_day": avoid_day,
                 "time_near_session_close": near_close,
             },

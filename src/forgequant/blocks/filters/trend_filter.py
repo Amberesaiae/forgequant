@@ -13,7 +13,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -103,8 +103,8 @@ class TrendFilter(BaseBlock):
                 "trend_ma": trend_ma,
                 "trend_upper_buffer": upper_buffer,
                 "trend_lower_buffer": lower_buffer,
-                "trend_allow_long": allow_long.fillna(False),
-                "trend_allow_short": allow_short.fillna(False),
+                SC.trend_allow_long: allow_long.fillna(False),
+                SC.trend_allow_short: allow_short.fillna(False),
                 "trend_direction": direction,
             },
             index=data.index,

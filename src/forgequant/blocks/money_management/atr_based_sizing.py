@@ -10,11 +10,12 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from forgequant.blocks._utils import _compute_atr
 from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -100,14 +101,7 @@ class ATRBasedSizing(BaseBlock):
         high = data["high"]
         low = data["low"]
         close = data["close"]
-        prev_close = close.shift(1)
-
-        tr1 = high - low
-        tr2 = (high - prev_close).abs()
-        tr3 = (low - prev_close).abs()
-        true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        alpha = 1.0 / atr_period
-        atr = true_range.ewm(alpha=alpha, adjust=False).mean()
+        atr = _compute_atr(data, atr_period)
 
         risk_per_unit = atr * risk_mult
 
@@ -131,7 +125,7 @@ class ATRBasedSizing(BaseBlock):
             {
                 "atrs_atr": atr,
                 "atrs_risk_per_unit": risk_per_unit,
-                "atrs_position_size": position_size,
+                SC.atrs_position_size: position_size,
                 "atrs_position_value": position_value,
                 "atrs_position_pct": position_pct,
             },

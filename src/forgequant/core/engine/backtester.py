@@ -92,91 +92,28 @@ class Backtester:
         for i in range(n):
             bar_pnl = 0.0
 
+            bar_pnl, trade_rec, closed, trade_mae, trade_mfe = self._process_long_bar(
+                i, in_long, entry_price, entry_bar, entry_sl, entry_tp,
+                position_size, trade_mae, trade_mfe, trade_id,
+                low_prices, high_prices, close_prices, exit_long, index, cfg,
+            )
+            if trade_rec is not None:
+                trades.append(trade_rec)
+                trade_id += 1
             if in_long:
-                if entry_sl > 0 and low_prices[i] <= entry_sl:
-                    exit_price = entry_sl
-                    exit_reason = "sl"
-                    bar_pnl, trade_rec = self._close_trade(
-                        trade_id, "long", entry_bar, i, index,
-                        entry_price, exit_price, exit_reason,
-                        position_size, trade_mae, trade_mfe, cfg,
-                    )
-                    trades.append(trade_rec)
-                    trade_id += 1
-                    in_long = False
+                in_long = not closed
 
-                elif entry_tp > 0 and high_prices[i] >= entry_tp:
-                    exit_price = entry_tp
-                    exit_reason = "tp"
-                    bar_pnl, trade_rec = self._close_trade(
-                        trade_id, "long", entry_bar, i, index,
-                        entry_price, exit_price, exit_reason,
-                        position_size, trade_mae, trade_mfe, cfg,
-                    )
-                    trades.append(trade_rec)
-                    trade_id += 1
-                    in_long = False
-
-                elif exit_long[i]:
-                    exit_price = close_prices[i]
-                    exit_reason = "signal"
-                    bar_pnl, trade_rec = self._close_trade(
-                        trade_id, "long", entry_bar, i, index,
-                        entry_price, exit_price, exit_reason,
-                        position_size, trade_mae, trade_mfe, cfg,
-                    )
-                    trades.append(trade_rec)
-                    trade_id += 1
-                    in_long = False
-
-                else:
-                    unrealized = low_prices[i] - entry_price
-                    trade_mae = min(trade_mae, unrealized)
-                    unrealized_best = high_prices[i] - entry_price
-                    trade_mfe = max(trade_mfe, unrealized_best)
-
+            bar_pnl_s, trade_rec_s, closed_s, trade_mae, trade_mfe = self._process_short_bar(
+                i, in_short, entry_price, entry_bar, entry_sl, entry_tp,
+                position_size, trade_mae, trade_mfe, trade_id,
+                low_prices, high_prices, close_prices, exit_short, index, cfg,
+            )
+            if trade_rec_s is not None:
+                trades.append(trade_rec_s)
+                trade_id += 1
+                bar_pnl = bar_pnl_s
             if in_short:
-                if entry_sl > 0 and high_prices[i] >= entry_sl:
-                    exit_price = entry_sl
-                    exit_reason = "sl"
-                    bar_pnl, trade_rec = self._close_trade(
-                        trade_id, "short", entry_bar, i, index,
-                        entry_price, exit_price, exit_reason,
-                        position_size, trade_mae, trade_mfe, cfg,
-                    )
-                    trades.append(trade_rec)
-                    trade_id += 1
-                    in_short = False
-
-                elif entry_tp > 0 and low_prices[i] <= entry_tp:
-                    exit_price = entry_tp
-                    exit_reason = "tp"
-                    bar_pnl, trade_rec = self._close_trade(
-                        trade_id, "short", entry_bar, i, index,
-                        entry_price, exit_price, exit_reason,
-                        position_size, trade_mae, trade_mfe, cfg,
-                    )
-                    trades.append(trade_rec)
-                    trade_id += 1
-                    in_short = False
-
-                elif exit_short[i]:
-                    exit_price = close_prices[i]
-                    exit_reason = "signal"
-                    bar_pnl, trade_rec = self._close_trade(
-                        trade_id, "short", entry_bar, i, index,
-                        entry_price, exit_price, exit_reason,
-                        position_size, trade_mae, trade_mfe, cfg,
-                    )
-                    trades.append(trade_rec)
-                    trade_id += 1
-                    in_short = False
-
-                else:
-                    unrealized = entry_price - high_prices[i]
-                    trade_mae = min(trade_mae, unrealized)
-                    unrealized_best = entry_price - low_prices[i]
-                    trade_mfe = max(trade_mfe, unrealized_best)
+                in_short = not closed_s
 
             if not in_long and not in_short:
                 if i < n - 1 and entry_long[i]:
@@ -258,6 +195,124 @@ class Backtester:
 
         return result
 
+    def _process_long_bar(
+        self,
+        i: int,
+        in_long: bool,
+        entry_price: float,
+        entry_bar: int,
+        entry_sl: float,
+        entry_tp: float,
+        position_size: float,
+        trade_mae: float,
+        trade_mfe: float,
+        trade_id: int,
+        low_prices: np.ndarray,
+        high_prices: np.ndarray,
+        close_prices: np.ndarray,
+        exit_long: np.ndarray,
+        index: pd.DatetimeIndex,
+        cfg: BacktestConfig,
+    ) -> tuple[float, TradeRecord | None, bool, float, float]:
+        """Process a bar when in a long position.
+
+        Returns: (bar_pnl, trade_record_or_None, position_closed, updated_mae, updated_mfe)
+        """
+        if not in_long:
+            return 0.0, None, False, trade_mae, trade_mfe
+
+        if entry_sl > 0 and low_prices[i] <= entry_sl:
+            exit_price = entry_sl
+            bar_pnl, trade_rec = self._close_trade(
+                trade_id, "long", entry_bar, i, index,
+                entry_price, exit_price, "sl",
+                position_size, trade_mae, trade_mfe, cfg,
+            )
+            return bar_pnl, trade_rec, True, trade_mae, trade_mfe
+
+        if entry_tp > 0 and high_prices[i] >= entry_tp:
+            exit_price = entry_tp
+            bar_pnl, trade_rec = self._close_trade(
+                trade_id, "long", entry_bar, i, index,
+                entry_price, exit_price, "tp",
+                position_size, trade_mae, trade_mfe, cfg,
+            )
+            return bar_pnl, trade_rec, True, trade_mae, trade_mfe
+
+        if exit_long[i]:
+            exit_price = close_prices[i]
+            bar_pnl, trade_rec = self._close_trade(
+                trade_id, "long", entry_bar, i, index,
+                entry_price, exit_price, "signal",
+                position_size, trade_mae, trade_mfe, cfg,
+            )
+            return bar_pnl, trade_rec, True, trade_mae, trade_mfe
+
+        unrealized = low_prices[i] - entry_price
+        trade_mae = min(trade_mae, unrealized)
+        unrealized_best = high_prices[i] - entry_price
+        trade_mfe = max(trade_mfe, unrealized_best)
+        return 0.0, None, False, trade_mae, trade_mfe
+
+    def _process_short_bar(
+        self,
+        i: int,
+        in_short: bool,
+        entry_price: float,
+        entry_bar: int,
+        entry_sl: float,
+        entry_tp: float,
+        position_size: float,
+        trade_mae: float,
+        trade_mfe: float,
+        trade_id: int,
+        low_prices: np.ndarray,
+        high_prices: np.ndarray,
+        close_prices: np.ndarray,
+        exit_short: np.ndarray,
+        index: pd.DatetimeIndex,
+        cfg: BacktestConfig,
+    ) -> tuple[float, TradeRecord | None, bool, float, float]:
+        """Process a bar when in a short position.
+
+        Returns: (bar_pnl, trade_record_or_None, position_closed, updated_mae, updated_mfe)
+        """
+        if not in_short:
+            return 0.0, None, False, trade_mae, trade_mfe
+
+        if entry_sl > 0 and high_prices[i] >= entry_sl:
+            exit_price = entry_sl
+            bar_pnl, trade_rec = self._close_trade(
+                trade_id, "short", entry_bar, i, index,
+                entry_price, exit_price, "sl",
+                position_size, trade_mae, trade_mfe, cfg,
+            )
+            return bar_pnl, trade_rec, True, trade_mae, trade_mfe
+
+        if entry_tp > 0 and low_prices[i] <= entry_tp:
+            exit_price = entry_tp
+            bar_pnl, trade_rec = self._close_trade(
+                trade_id, "short", entry_bar, i, index,
+                entry_price, exit_price, "tp",
+                position_size, trade_mae, trade_mfe, cfg,
+            )
+            return bar_pnl, trade_rec, True, trade_mae, trade_mfe
+
+        if exit_short[i]:
+            exit_price = close_prices[i]
+            bar_pnl, trade_rec = self._close_trade(
+                trade_id, "short", entry_bar, i, index,
+                entry_price, exit_price, "signal",
+                position_size, trade_mae, trade_mfe, cfg,
+            )
+            return bar_pnl, trade_rec, True, trade_mae, trade_mfe
+
+        unrealized = entry_price - high_prices[i]
+        trade_mae = min(trade_mae, unrealized)
+        unrealized_best = entry_price - low_prices[i]
+        trade_mfe = max(trade_mfe, unrealized_best)
+        return 0.0, None, False, trade_mae, trade_mfe
+
     @staticmethod
     def _close_trade(
         trade_id: int,
@@ -285,7 +340,7 @@ class Backtester:
         pnl_dollar -= commission
 
         bars_held = exit_bar - entry_bar
-        if bars_held < 0:
+        if bars_held < 0:  # pragma: no cover
             bars_held = 0
 
         record = TradeRecord(

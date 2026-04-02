@@ -10,11 +10,12 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from forgequant.blocks._utils import _compute_atr
 from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -90,14 +91,7 @@ class FixedRiskSizing(BaseBlock):
         high = data["high"]
         low = data["low"]
         close = data["close"]
-        prev_close = close.shift(1)
-
-        tr1 = high - low
-        tr2 = (high - prev_close).abs()
-        tr3 = (low - prev_close).abs()
-        true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        alpha = 1.0 / atr_period
-        atr = true_range.ewm(alpha=alpha, adjust=False).mean()
+        atr = _compute_atr(data, atr_period)
 
         risk_amount = equity * risk_pct / 100.0
         stop_distance = atr * sl_mult
@@ -110,7 +104,7 @@ class FixedRiskSizing(BaseBlock):
                 "fr_atr": atr,
                 "fr_stop_distance": stop_distance,
                 "fr_risk_amount": risk_amount,
-                "fr_position_size": position_size,
+                SC.fr_position_size: position_size,
                 "fr_position_pct": position_pct,
             },
             index=data.index,

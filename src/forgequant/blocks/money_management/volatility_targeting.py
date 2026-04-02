@@ -14,7 +14,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -117,7 +117,7 @@ class VolatilityTargetingSizing(BaseBlock):
             {
                 "vt_realized_vol": realized_vol,
                 "vt_target_exposure": target_exposure,
-                "vt_position_size": position_size,
+                SC.vt_position_size: position_size,
                 "vt_position_pct": position_pct,
             },
             index=data.index,

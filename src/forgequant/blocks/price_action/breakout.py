@@ -16,7 +16,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -104,9 +104,9 @@ class BreakoutBlock(BaseBlock):
             {
                 "breakout_resistance": rolling_high,
                 "breakout_support": rolling_low,
-                "breakout_long": breakout_long.fillna(False),
-                "breakout_short": breakout_short.fillna(False),
-                "breakout_volume_confirm": volume_confirm.fillna(False),
+                SC.breakout_long: breakout_long.fillna(False),
+                SC.breakout_short: breakout_short.fillna(False),
+                SC.breakout_volume_confirm: volume_confirm.fillna(False),
             },
             index=data.index,
         )

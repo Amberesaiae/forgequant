@@ -16,7 +16,7 @@ from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
 from forgequant.core.exceptions import BlockComputeError
-from forgequant.core.types import BlockCategory, BlockParams, BlockResult
+from forgequant.core.types import BlockCategory, BlockParams, BlockResult, SIGNAL_COLUMNS as SC
 
 
 @BlockRegistry.register
@@ -171,8 +171,8 @@ class ReversalPatternEntry(BaseBlock):
                 "reversal_shooting_star": shooting_star,
                 "reversal_morning_star": morning_star,
                 "reversal_evening_star": evening_star,
-                "reversal_long_entry": long_entry,
-                "reversal_short_entry": short_entry,
+                SC.reversal_long_entry: long_entry,
+                SC.reversal_short_entry: short_entry,
             },
             index=data.index,
         )

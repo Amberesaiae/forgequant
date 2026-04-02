@@ -8,37 +8,72 @@ from typing import Any
 
 import reflex as rx
 
+from forgequant.ai_forge.providers import (
+    MODEL_CATALOG,
+    PROVIDER_DISPLAY_NAMES,
+    PROVIDER_MODEL_IDS,
+    PROVIDER_ORDER,
+)
+
 
 class ForgeState(rx.State):
-    """Manages the AI Forge page's state."""
+    """
+    Manages the AI Forge page's state: idea input, generation, and results.
 
+    The model string is a LiteLLM identifier (e.g. "zai/glm-5-turbo")
+    which encodes both provider and model in one field.
+    """
+
+    # ── Input fields ────────────────────────────────────────────────────
     idea: str = ""
-    provider: str = "openai"
-    model: str = "gpt-4o"
+    selected_provider: str = "glm"
+    selected_model: str = "zai/glm-5-turbo"
     temperature: float = 0.7
     use_rag: bool = False
 
+    # ── Generation state ────────────────────────────────────────────────
     is_generating: bool = False
     generation_success: bool = False
     generation_attempted: bool = False
     generation_attempts: int = 0
 
+    # ── Result ──────────────────────────────────────────────────────────
     spec_dict: dict[str, Any] = {}
     spec_json: str = ""
     validation_errors: list[str] = []
     validation_warnings: list[str] = []
+
+    # ── Error ───────────────────────────────────────────────────────────
     error_message: str = ""
 
-    provider_options: list[str] = ["openai", "anthropic", "groq"]
-    model_options: dict[str, list[str]] = {
-        "openai": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
-        "anthropic": ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
-        "groq": ["llama-3.1-70b-versatile", "mixtral-8x7b-32768"],
+    # ── Static data (derived from ai_forge/providers.py catalog) ─────────
+    provider_options: list[str] = list(PROVIDER_ORDER)
+
+    provider_display_names: dict[str, str] = dict(PROVIDER_DISPLAY_NAMES)
+
+    model_options: dict[str, list[str]] = {k: list(v) for k, v in PROVIDER_MODEL_IDS.items()}
+
+    model_descriptions: dict[str, str] = {
+        mid: (
+            f"{info.get('tier', '').title()} | "
+            f"{info.get('context_window', 0) // 1000}K ctx | "
+            f"{info.get('pricing', '')} — "
+            f"{info.get('description', '')[:60]}"
+        )
+        for mid, info in MODEL_CATALOG.items()
     }
 
     @rx.var
     def current_model_options(self) -> list[str]:
-        return self.model_options.get(self.provider, ["gpt-4o"])
+        return self.model_options.get(self.selected_provider, [])
+
+    @rx.var
+    def current_model_description(self) -> str:
+        return self.model_descriptions.get(self.selected_model, "")
+
+    @rx.var
+    def current_provider_display(self) -> str:
+        return self.provider_display_names.get(self.selected_provider, self.selected_provider)
 
     @rx.var
     def can_generate(self) -> bool:
@@ -94,13 +129,16 @@ class ForgeState(rx.State):
 
     @rx.event
     def set_provider(self, value: str) -> None:
-        self.provider = value
-        models = self.model_options.get(value, ["gpt-4o"])
-        self.model = models[0] if models else "gpt-4o"
+        self.selected_provider = value
+        models = self.model_options.get(value, [])
+        if models:
+            self.selected_model = models[0]
+        else:
+            self.selected_model = "zai/glm-5-turbo"
 
     @rx.event
     def set_model(self, value: str) -> None:
-        self.model = value
+        self.selected_model = value
 
     @rx.event
     def set_temperature(self, value: str) -> None:
@@ -115,6 +153,7 @@ class ForgeState(rx.State):
 
     @rx.event(background=True)
     async def generate_strategy(self) -> None:
+        """Run the AI Forge pipeline."""
         if not self.can_generate:
             return
 
@@ -128,23 +167,13 @@ class ForgeState(rx.State):
             self.validation_warnings = []
 
         try:
-            import importlib
-            for mod in [
-                "forgequant.blocks.indicators",
-                "forgequant.blocks.price_action",
-                "forgequant.blocks.entry_rules",
-                "forgequant.blocks.exit_rules",
-                "forgequant.blocks.filters",
-                "forgequant.blocks.money_management",
-            ]:
-                importlib.import_module(mod)
+            import forgequant.blocks  # noqa: F401 — eager registration
 
             from forgequant.ai_forge.pipeline import ForgeQuantPipeline, PipelineConfig
             from forgequant.blocks.registry import BlockRegistry
 
             config = PipelineConfig(
-                provider=self.provider,
-                model=self.model,
+                model=self.selected_model,
                 temperature=self.temperature,
                 use_rag=self.use_rag,
             )
@@ -168,7 +197,10 @@ class ForgeState(rx.State):
 
         except ImportError:
             async with self:
-                self.error_message = "AI Forge dependencies not installed. Run: pip install -e '.[ai]'"
+                self.error_message = (
+                    "AI Forge dependencies not installed. "
+                    "Run: pip install -e '.[ai]'"
+                )
         except Exception as exc:
             async with self:
                 self.error_message = f"Pipeline error: {exc}"
@@ -179,9 +211,8 @@ class ForgeState(rx.State):
     @rx.event
     def save_current_spec(self) -> None:
         if self.spec_dict:
-            parent = self.get_parent_state()
-            if parent is not None:
-                parent.save_strategy(self.spec_dict)
+            from forgequant.frontend.state.app_state import AppState
+            yield AppState.save_strategy(self.spec_dict)
 
     @rx.event
     def clear_results(self) -> None:

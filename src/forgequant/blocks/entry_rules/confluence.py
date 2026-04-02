@@ -10,6 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from forgequant.blocks._utils import _compute_atr, _compute_rsi
 from forgequant.blocks.base import BaseBlock
 from forgequant.blocks.metadata import BlockMetadata, ParameterSpec
 from forgequant.blocks.registry import BlockRegistry
@@ -139,24 +140,12 @@ class ConfluenceEntry(BaseBlock):
         trend_bullish = close > trend_ema
         trend_bearish = close < trend_ema
 
-        delta = close.diff()
-        gains = delta.clip(lower=0.0)
-        losses = (-delta).clip(lower=0.0)
-        alpha = 1.0 / rsi_period
-        avg_gain = gains.ewm(alpha=alpha, adjust=False).mean()
-        avg_loss = losses.ewm(alpha=alpha, adjust=False).mean()
-        rs = avg_gain / avg_loss
-        rsi = (100.0 - (100.0 / (1.0 + rs))).fillna(50.0)
+        rsi = _compute_rsi(data, rsi_period)
 
         momentum_long = (rsi >= rsi_long_min) & (rsi <= rsi_long_max)
         momentum_short = (rsi >= rsi_short_min) & (rsi <= rsi_short_max)
 
-        prev_close = close.shift(1)
-        tr1 = high - low
-        tr2 = (high - prev_close).abs()
-        tr3 = (low - prev_close).abs()
-        true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        atr = true_range.ewm(alpha=1.0 / atr_period, adjust=False).mean()
+        atr = _compute_atr(data, atr_period)
         atr_pct = (atr / close) * 100.0
 
         volatility_ok = (atr_pct >= min_atr_pct) & (atr_pct <= max_atr_pct)
